@@ -1,0 +1,9 @@
+/coverage.out
+/.vscode/
+/bin/
+/certs/
+/.env
+*.exe
+/vendor.protogen/
+
+
