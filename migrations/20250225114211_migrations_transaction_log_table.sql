@@ -4,7 +4,7 @@ CREATE TABLE transaction_log (
     id BIGSERIAL PRIMARY KEY,
     timestamp timestamp NOT NULL DEFAULT now(),
     log text NOT NULL
-)
+);
 -- +goose StatementEnd
 
 
