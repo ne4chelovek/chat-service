@@ -9,6 +9,14 @@ func ToChatFromDesc(chat *desc.Message) *model.Message {
 	return &model.Message{
 		From:        chat.From,
 		Text:        chat.Text,
-		Timestamppb: chat.Timestamp,
+		Timestamppb: chat.CratedAt,
+	}
+}
+
+func ToMessageFromService(message *model.Message) *desc.Message {
+	return &desc.Message{
+		From:     message.From,
+		Text:     message.Text,
+		CratedAt: message.Timestamppb,
 	}
 }

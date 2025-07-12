@@ -12,4 +12,5 @@ type ChatService interface {
 	DeleteChat(ctx context.Context, chatID int64) (*emptypb.Empty, error)
 	GetChatInfo(ctx context.Context, chatID int64) ([]string, error)
 	SendMessage(ctx context.Context, chatID int64, mes *model.Message) (string, error)
+	Connect(chatID int64, username string, stream model.Stream) error
 }

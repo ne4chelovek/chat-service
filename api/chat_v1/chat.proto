@@ -50,9 +50,13 @@ service Chat {
             post: "/chat/v1/send"
             body: "*"
         };
-    } 
+    }
+    rpc ConnectChat(ConnectChatRequest) returns(stream Message);
 }
-
+message ConnectChatRequest {
+    string chat_id = 1;
+    string username = 2;
+}
 
 //Ручка создания нового чата
 message CreateRequest {
@@ -72,7 +76,7 @@ message DeleteRequest {
 message Message {
     string from = 1;
     string text = 2 [(validate.rules).string = {min_len: 1, max_len: 100}]; 
-    google.protobuf.Timestamp timestamp = 4;
+    google.protobuf.Timestamp crated_at = 4;
 }
 
 //Ручка отправки сообщения на сервер

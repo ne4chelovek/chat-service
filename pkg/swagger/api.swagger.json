@@ -194,7 +194,7 @@
         "text": {
           "type": "string"
         },
-        "timestamp": {
+        "cratedAt": {
           "type": "string",
           "format": "date-time"
         }

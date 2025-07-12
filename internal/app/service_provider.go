@@ -2,22 +2,41 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"github.com/ne4chelovek/auth-service/pkg/access_v1"
 	"github.com/ne4chelovek/chat_common/pkg/closer"
 	"github.com/ne4chelovek/chat_common/pkg/db"
 	"github.com/ne4chelovek/chat_common/pkg/db/pg"
 	"github.com/ne4chelovek/chat_common/pkg/db/transaction"
 	"github.com/ne4chelovek/chat_service/internal/api/chat"
+	"github.com/ne4chelovek/chat_service/internal/client/rpc"
+	rpcAuth "github.com/ne4chelovek/chat_service/internal/client/rpc/auth"
+	clientApi "github.com/ne4chelovek/chat_service/internal/clientApi"
+	"github.com/ne4chelovek/chat_service/internal/clientApi/apiHttp"
+	"github.com/ne4chelovek/chat_service/internal/kafkaConsumer/consumer"
+	"github.com/ne4chelovek/chat_service/internal/kafkaConsumer/handler"
 	"github.com/ne4chelovek/chat_service/internal/repository"
-	"github.com/ne4chelovek/chat_service/internal/service"
-	"log"
-
 	chatRepository "github.com/ne4chelovek/chat_service/internal/repository/chat"
 	logRepository "github.com/ne4chelovek/chat_service/internal/repository/log"
+	"github.com/ne4chelovek/chat_service/internal/service"
 	chatService "github.com/ne4chelovek/chat_service/internal/service/chat"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"log"
+	"net/http"
+	"time"
 )
 
+var kafkaAddresses = []string{
+	"localhost:9091", // Для доступа с хоста
+	"localhost:9092",
+	"localhost:9093",
+}
+
 const (
-	dbDSN = "host=localhost port=54321 dbname=chat user=chat-user password=chat-password sslmode=disable"
+	topic         = "user_session_events"
+	consumerGroup = "chat-consumer-group"
+	dbDSN         = "host=localhost port=5431 dbname=chat user=chat-user password=chat-password sslmode=disable"
 )
 
 type serviceProvider struct {
@@ -27,6 +46,9 @@ type serviceProvider struct {
 	chatRepository repository.ChatRepository
 	chatService    service.ChatService
 	logRepository  repository.LogRepository
+
+	authClient rpc.AuthClient
+	apiClient  clientApi.ApiCat
 
 	chatServ *chat.Server
 }
@@ -51,6 +73,34 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 		s.dbClient = cl
 	}
 	return s.dbClient
+}
+
+func (s *serviceProvider) AuthClient() rpc.AuthClient {
+	if s.authClient == nil {
+		creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+		if err != nil {
+			log.Fatalf("failed to get credentials of authentication service: %v", err)
+		}
+		authConn, err := grpc.NewClient(fmt.Sprintf(":%d", servicePort),
+			grpc.WithTransportCredentials(creds),
+		)
+		if err != nil {
+			log.Fatalf("failed to connect to auth service: %v", err)
+		}
+
+		s.authClient = rpcAuth.NewAuthClient(access_v1.NewAccessV1Client(authConn))
+	}
+	return s.authClient
+}
+
+func (s *serviceProvider) ApiService() clientApi.ApiCat {
+	if s.apiClient == nil {
+		httpClient := &http.Client{
+			Timeout: 3 * time.Second,
+		}
+		s.apiClient = apiHttp.NewApiClient(httpClient)
+	}
+	return s.apiClient
 }
 
 func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
@@ -80,6 +130,7 @@ func (s *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 		s.chatService = chatService.NewService(
 			s.ChatRepository(ctx),
 			s.LogRepository(ctx),
+			s.ApiService(),
 			s.TxManager(ctx),
 		)
 	}
@@ -91,4 +142,14 @@ func (s *serviceProvider) ChatImpl(ctx context.Context) *chat.Server {
 		s.chatServ = chat.NewImplementation(s.ChatService(ctx))
 	}
 	return s.chatServ
+}
+
+func (s *serviceProvider) KafkaConsumer() *consumer.Consumer {
+	h := handler.NewHandler()
+	c, err := consumer.NewConsumer(h, kafkaAddresses, topic, consumerGroup)
+	if err != nil {
+		log.Fatalf("failed to create kafka consumer: %v", err)
+	}
+
+	return c
 }

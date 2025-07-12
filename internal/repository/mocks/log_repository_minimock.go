@@ -2,7 +2,7 @@
 
 package mocks
 
-//go:generate minimock -i chat-server/internal/repository.LogRepository -o log_repository_minimock.go -n LogRepositoryMock -p mocks
+//go:generate minimock -i github.com/ne4chelovek/chat_service/internal/repository.LogRepository -o log_repository_minimock.go -n LogRepositoryMock -p mocks
 
 import (
 	"context"

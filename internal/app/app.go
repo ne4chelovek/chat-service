@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/ne4chelovek/chat_common/pkg/closer"
 	"github.com/ne4chelovek/chat_service/internal/interceptor"
+	desc "github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"github.com/rakyll/statik/fs"
+	"github.com/rs/cors"
 	"google.golang.org/grpc/credentials"
 	"io"
 	"log"
@@ -13,20 +16,17 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/ne4chelovek/chat_common/pkg/closer"
-	desc "github.com/ne4chelovek/chat_service/pkg/chat_v1"
-	"github.com/rs/cors"
-
 	_ "github.com/ne4chelovek/chat_service/statik"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 const (
-	grpcPort       = 9090
+	grpcPort       = 9070
 	httpAddress    = "localhost:8080"
 	swaggerAddress = "localhost:8090"
 	grpcAddress    = "localhost:9090"
+	servicePort    = 9000
 )
 
 type App struct {
@@ -34,6 +34,7 @@ type App struct {
 	grpcServer      *grpc.Server
 	httpServer      *http.Server
 	swaggerServer   *http.Server
+	httpClient      *http.Client
 }
 
 func NewApp(ctx context.Context) (*App, error) {
@@ -50,9 +51,12 @@ func (a *App) Run() error {
 	defer func() {
 		closer.CloseAll()
 		closer.Wait()
+		if err := a.serviceProvider.KafkaConsumer().Stop(); err != nil {
+			log.Printf("failed to stop kafka consumer: %v", err)
+		}
 	}()
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -79,6 +83,12 @@ func (a *App) Run() error {
 		if err != nil {
 			log.Fatalf("failed to run Swagger server: %v", err)
 		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		a.serviceProvider.KafkaConsumer().Start()
 	}()
 
 	wg.Wait()
@@ -111,17 +121,21 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 func (a *App) initGRPCServer(ctx context.Context) error {
 	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
 	if err != nil {
-		fmt.Printf("failed to load TLS keys: %v", err)
+		log.Fatalf("failed to create credentials: %v", err)
 		return err
 	}
 
+	authInterceptor := &interceptor.Client{Client: a.serviceProvider.AuthClient()}
+
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+		grpc.ChainUnaryInterceptor(
+			interceptor.ValidateInterceptor,
+			authInterceptor.AuthInterceptor,
+		),
 	)
 
 	reflection.Register(a.grpcServer)
-
 	desc.RegisterChatServer(a.grpcServer, a.serviceProvider.ChatImpl(ctx))
 
 	return nil

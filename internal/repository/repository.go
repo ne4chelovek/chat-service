@@ -12,6 +12,7 @@ type ChatRepository interface {
 	DeleteChat(ctx context.Context, chatID int64) (*emptypb.Empty, error)
 	GetChatInfo(ctx context.Context, chatID int64) ([]string, error)
 	SendMessage(ctx context.Context, chatID int64, mes *model.Message) (string, error)
+	GetMessage(ctx context.Context, chatID int64, page uint64) ([]*model.Message, error)
 }
 
 type LogRepository interface {

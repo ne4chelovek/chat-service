@@ -51,7 +51,7 @@ func TestDelete(t *testing.T) {
 		want *emptypb.Empty
 		err  error
 
-		chatSeviceMock    chatRepositoryMockFunc
+		chatServiceMock   chatRepositoryMockFunc
 		logRepositoryMock logRepositoryMockFunc
 		transactorMock    transactorMockFunc
 	}{
@@ -63,7 +63,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: nil,
 			err:  nil,
-			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
+			chatServiceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
 				mock.DeleteChatMock.Expect(minimock.AnyContext, id).Return(nil, nil)
 				return mock
@@ -89,7 +89,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: nil,
 			err:  repositoryErr,
-			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
+			chatServiceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
 				mock.DeleteChatMock.Expect(minimock.AnyContext, id).Return(nil, repositoryErr)
 				return mock
@@ -114,7 +114,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: nil,
 			err:  repositoryErr,
-			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
+			chatServiceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
 				mock.DeleteChatMock.Expect(minimock.AnyContext, id).Return(nil, nil)
 				return mock
@@ -138,7 +138,7 @@ func TestDelete(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			chatServiceMock := tt.chatSeviceMock(mc)
+			chatServiceMock := tt.chatServiceMock(mc)
 			logRepositoryMock := tt.logRepositoryMock(mc)
 			transactorMock := transaction.NewTransactionManager(tt.transactorMock(mc))
 			service := chat.NewService(chatServiceMock, logRepositoryMock, transactorMock)

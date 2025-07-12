@@ -22,6 +22,8 @@ const (
 	from_userColumn  = "from_user"
 	textColumn       = "text"
 	created_atColumn = "created_at"
+	timestampColumn  = "timestamp"
+	messagesPage     = 10
 )
 
 type repo struct {
@@ -128,4 +130,41 @@ func (r *repo) SendMessage(ctx context.Context, chatID int64, mes *model.Message
 		return "", fmt.Errorf("failed to execute query: %v", err)
 	}
 	return status, nil
+}
+
+func (r *repo) GetMessage(ctx context.Context, chatID int64, page uint64) ([]*model.Message, error) {
+	var limit uint64 = messagesPage
+	offset := page * messagesPage
+	builderInsert := sq.Select(from_userColumn, textColumn, timestampColumn).
+		From(tableMessages).
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{idColumn: chatID}).
+		OrderBy(timestampColumn + " DESC").
+		Limit(limit).
+		Offset(offset)
+
+	query, args, err := builderInsert.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %v", err)
+	}
+
+	q := db.Query{
+		Name:     "chat_repository.SendMessage",
+		QueryRaw: query,
+	}
+
+	rows, err := r.db.DB().QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
+	}
+
+	var listMessage []*model.Message
+	for rows.Next() {
+		message := &model.Message{}
+		if err := rows.Scan(&message.From, &message.Text, &message.Timestamppb); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+		listMessage = append(listMessage, message)
+	}
+	return listMessage, nil
 }
