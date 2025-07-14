@@ -90,8 +90,8 @@ vendor-proto:
 	fi
 
 copy-to-server:
-	scp service_linux root@87.228.39.212:~
-	ssh root@87.228.39.212 "mkdir -p ~/certs"
+	scp service_linux root@188.68.206.214:~
+	ssh root@188.68.206.214 "mkdir -p ~/certs"
 	scp -r certs/* root@87.228.97.164:~/certs/
 
 
