@@ -26,7 +26,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/
 RUN mkdir -p certs
 COPY --from=builder /app/bin/mikle-chat .
-COPY certs/ca.cert certs/ca.key certs/ca.srl certs/service.csr certs/service.key certs/service.pem ./certs/
+COPY certs/ca.cert \
+     certs/ca.key \
+     certs/ca.srl \
+     certs/service.csr \
+     certs/service.key \
+     certs/service.pem \
+     ./certs/
 
 # Запуск приложения
 CMD ["./mikle-chat"]

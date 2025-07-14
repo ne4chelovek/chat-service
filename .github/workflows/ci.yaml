@@ -29,7 +29,16 @@ jobs:
         run: |
           TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME -f Dockerfile . 
+          echo "Checking certs directory:"
+          ls -la certs/
+
+          docker buildx build \
+          --no-cache \
+          --push \
+          --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME \
+          -f Dockerfile \
+          --build-arg BUILDKIT_CONTEXT_KEEP_GIT_DIR=1 \
+          .
 
   deploy-image:
     runs-on: ubuntu-latest
