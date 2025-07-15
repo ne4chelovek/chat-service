@@ -13,6 +13,13 @@ services:
     volumes:
       - postgres_volume:/var/lib/postgresql/data
 
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USER:-chat_user} -d ${PG_DATABASE_NAME:-chat}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   migrator:
     build:
       context: .
