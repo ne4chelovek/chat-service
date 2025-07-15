@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
           script: |
-            cd /opt/mikle
+            cd /root
             echo "Creating .env file..."
             cat <<EOF > .env
             TAG=$(echo $GITHUB_SHA | head -c7)
