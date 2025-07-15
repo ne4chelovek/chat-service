@@ -36,7 +36,7 @@ var kafkaAddresses = []string{
 const (
 	topic         = "user_session_events"
 	consumerGroup = "chat-consumer-group"
-	dbDSN         = "host=localhost port=5431 dbname=chat user=chat-user password=chat-password sslmode=disable"
+	dbDSN         = "host=pg-chat port=5431 dbname=chat user=chat-user password=chat-password sslmode=disable"
 )
 
 type serviceProvider struct {

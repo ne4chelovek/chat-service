@@ -53,19 +53,69 @@ jobs:
           script: |
             # Set up variables
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-            
+
             # Login into Selectel Registry
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
-            
+
             # Create .env file for production
             echo "TAG=$TAG_NAME" > .env
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
             echo "DB_USER=${{ secrets.DB_USER }}" >> .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            
+            echo "PG_PORT=5431" >> .env
+            echo "MIGRATION_DIR=./migrations" >> .env
+
+            # Create docker-compose.yml
+            cat << 'EOF' > docker-compose.yml
+            version: '3.8'
+
+            volumes:
+              postgres_volume:
+
+            services:
+              app:
+                image: ${REGISTRY}/${IMAGE_NAME}:${TAG}
+                ports:
+                  - "9070:9070"
+                depends_on:
+                  - pg-chat
+                environment:
+                  DB_HOST: pg-chat
+                  DB_PORT: ${PG_PORT}
+                  DB_NAME: ${PG_DATABASE_NAME}
+                  DB_USER: ${PG_USER}
+                  DB_PASSWORD: ${PG_PASSWORD}
+
+              pg-chat:
+                image: postgres:14-alpine3.19
+                environment:
+                  POSTGRES_DB: ${PG_DATABASE_NAME}
+                  POSTGRES_USER: ${PG_USER}
+                  POSTGRES_PASSWORD: ${PG_PASSWORD}
+                ports:
+                  - "${PG_PORT}:5432"
+                volumes:
+                  - postgres_volume:/var/lib/postgresql/data
+
+              migrator:
+                build:
+                  context: .
+                  dockerfile: migration.Dockerfile
+                restart: on-failure
+                depends_on:
+                  - pg-chat
+                environment:
+                  DB_HOST: pg-chat
+                  DB_PORT: ${PG_PORT}
+                  DB_NAME: ${PG_DATABASE_NAME}
+                  DB_USER: ${PG_USER}
+                  DB_PASSWORD: ${PG_PASSWORD}
+                  MIGRATION_DIR: ${MIGRATION_DIR}
+            EOF
+
             # Stop and remove old containers
             docker compose down || true
-            
+
             # Pull new images and start services
             docker compose pull
             docker compose up -d
