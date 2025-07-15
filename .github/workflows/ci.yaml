@@ -90,9 +90,13 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           script: |
             cd /root
-            echo "Creating .env file..."
-            cat <<EOF > .env
+            echo "=== Debug: GITHUB_SHA ==="
+            echo "$GITHUB_SHA"
             TAG=$(echo $GITHUB_SHA | head -c7)
+            echo "=== Using TAG: $TAG ==="
+            rm -f .env
+            cat <<EOF > .env
+            TAG=$TAG
             REGISTRY=${{ env.REGISTRY }}
             IMAGE_NAME=${{ env.IMAGE_NAME }}
             PG_DATABASE_NAME=${{ secrets.DB_NAME }}
@@ -101,11 +105,10 @@ jobs:
             PG_PORT=5431
             MIGRATION_DIR=./migrations
             EOF
-            echo ".env content:"
+            echo "=== .env content ==="
             cat .env
-            echo "Starting deployment..."
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${{ env.REGISTRY }}
             docker compose down || true
-            docker compose pull
+            docker compose pull || true
             docker compose up -d
             echo "Deployment completed"
