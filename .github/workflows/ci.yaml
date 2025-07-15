@@ -8,7 +8,7 @@ env:
   REGISTRY: "cr.selcloud.ru/ne4chelovek"
   IMAGE_NAME: "mikle"
   COMPOSE_PROJECT_NAME: "mikle-app"
-  DEPLOY_DIR: "/opt/mikle"
+  DEPLOY_DIR: "/root"
 
 jobs:
   build-and-push:
