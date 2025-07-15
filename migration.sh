@@ -1,6 +1,11 @@
 #!/bin/bash
-source .env
+set -e
 
-export MIGRATION_DSN="host=pg-chat port=5432 dbname=$PG_DATABASE_NAME user=$PG_USER password=$PG_PASSWORD sslmode=disable"
+echo "Waiting for PostgreSQL to be ready..."
+until goose postgres "host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USER password=$DB_PASSWORD sslmode=disable" status; do
+  >&2 echo "Postgres is unavailable - sleeping"
+  sleep 1
+done
 
-sleep 2 && goose -dir "${MIGRATION_DIR}" postgres "${MIGRATION_DSN}" up -v
+echo "Running migrations..."
+goose -dir migrations postgres "host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USER password=$DB_PASSWORD sslmode=disable" up
