@@ -92,7 +92,7 @@ vendor-proto:
 copy-to-server:
 	scp service_linux root@188.68.206.214:~
 	ssh root@188.68.206.214 "mkdir -p ~/certs"
-	scp -r certs/* root@87.228.97.164:~/certs/
+	scp -r certs/* root@188.68.206.214:~/certs/
 
 
 docker-build-and-push:

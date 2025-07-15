@@ -25,7 +25,6 @@ jobs:
         run: |
           echo "${{ secrets.SERVICE_KEY }}" > certs/service.key
           echo "${{ secrets.SERVICE_PEM }}" > certs/service.pem
-          # Добавьте остальные файлы сертификатов аналогично, если они есть в secrets
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -58,11 +57,15 @@ jobs:
             # Login into Selectel Registry
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
             
-            # Stop running container
-            docker stop $CONTAINER_NAME
+            # Create .env file for production
+            echo "TAG=$TAG_NAME" > .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
             
-            # Remove old container
-            docker rm $CONTAINER_NAME
+            # Stop and remove old containers
+            docker-compose down || true
             
-            # Run a new container from a new image
-            docker run -d -p 9070:9070 --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
+            # Pull new images and start services
+            docker-compose pull
+            docker-compose up -d
