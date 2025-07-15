@@ -93,8 +93,27 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
           script: |
-            cd ${{ env.DEPLOY_DIR }}
+            cd /opt/mikle
+
+            echo "Creating .env file..."
+            cat <<EOF > .env
+            TAG=$(echo $GITHUB_SHA | head -c7)
+            REGISTRY=${{ env.REGISTRY }}
+            IMAGE_NAME=${{ env.IMAGE_NAME }}
+            PG_DATABASE_NAME=${{ secrets.DB_NAME }}
+            PG_USER=${{ secrets.DB_USER }}
+            PG_PASSWORD=${{ secrets.DB_PASSWORD }}
+            PG_PORT=5431
+            MIGRATION_DIR=./migrations
+            EOF
+
+            echo ".env content:"
+            cat .env
+
+            echo "Starting deployment..."
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${{ env.REGISTRY }}
             docker compose down || true
             docker compose pull
             docker compose up -d
+
+            echo "Deployment completed"
