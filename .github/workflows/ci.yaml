@@ -22,45 +22,49 @@ jobs:
           mkdir -p certs
           echo "${{ secrets.SERVICE_KEY }}" > certs/service.key
           echo "${{ secrets.SERVICE_PEM }}" > certs/service.pem
-          chmod -R 700 certs
-          - name: Prepare migration files
-            run: |
-              # Создаем временный .env для сборки мигратора
-              echo "PG_DATABASE_NAME=${{ secrets.DB_NAME }}" > .env.migrator
-              echo "PG_USER=${{ secrets.DB_USER }}" >> .env.migrator
-              echo "PG_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.migrator
-              echo "PG_PORT=5431" >> .env.migrator
-              echo "MIGRATION_DIR=./migrations" >> .env.migrator
-          - name: Set up Docker Buildx
-            uses: docker/setup-buildx-action@v2
-          - name: Login to Docker Registry
-            uses: docker/login-action@v2
-            with:
-              username: ${{ secrets.REGISTRY_USERNAME }}
-              password: ${{ secrets.REGISTRY_PASSWORD }}
-              registry: ${{ env.REGISTRY }}
-          - name: Build and push main image
-            run: |
-              TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-              docker buildx build \
-                --platform linux/amd64 \
-                --push \
-                --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG_NAME \
-                -f Dockerfile .
-          - name: Build and push migrator image
-            run: |
-              TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-              docker buildx build \
-                --platform linux/amd64 \
-                --push \
-                --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator:$TAG_NAME \
-                -f migration.Dockerfile \
-                --build-arg DB_HOST=pg-chat \
-                --build-arg DB_PORT=5431 \
-                --build-arg DB_NAME=${{ secrets.DB_NAME }} \
-                --build-arg DB_USER=${{ secrets.DB_USER }} \
-                --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} .
+          chmod -R 700 certs  
 
+      - name: Prepare migration files
+        run: |
+          # Создаем временный .env для сборки мигратора
+          echo "PG_DATABASE_NAME=${{ secrets.DB_NAME }}" > .env.migrator
+          echo "PG_USER=${{ secrets.DB_USER }}" >> .env.migrator
+          echo "PG_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.migrator
+          echo "PG_PORT=5431" >> .env.migrator
+          echo "MIGRATION_DIR=./migrations" >> .env.migrator
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ${{ env.REGISTRY }}
+
+      - name: Build and push main image
+        run: |
+          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG_NAME \
+            -f Dockerfile .
+
+      - name: Build and push migrator image
+        run: |
+          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator:$TAG_NAME \
+            -f migration.Dockerfile \
+            --build-arg DB_HOST=pg-chat \
+            --build-arg DB_PORT=5431 \
+            --build-arg DB_NAME=${{ secrets.DB_NAME }} \
+            --build-arg DB_USER=${{ secrets.DB_USER }} \
+            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} .
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
