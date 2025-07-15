@@ -66,8 +66,9 @@ jobs:
           cp -r migrations deploy/
           
           # Create .env file
+          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           cat <<EOF > deploy/.env
-          TAG=$(echo $GITHUB_SHA | head -c7)
+          TAG=$TAG_NAME
           REGISTRY=${{ env.REGISTRY }}
           IMAGE_NAME=${{ env.IMAGE_NAME }}
           PG_DATABASE_NAME=${{ secrets.DB_NAME }}
@@ -92,14 +93,11 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
-          envs: |
-            REGISTRY: ${{ env.REGISTRY }}
-            IMAGE_NAME: ${{ env.IMAGE_NAME }}
-            TAG: $(echo $GITHUB_SHA | head -c7)
           script: |
             cd ${{ env.DEPLOY_DIR }}
             
-            # Удаляем устаревший атрибут version (однократно)
+            ls -la
+            
             sed -i '/^version:/d' docker-compose.yml
             
             docker compose down || true
