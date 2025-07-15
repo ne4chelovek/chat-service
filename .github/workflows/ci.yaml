@@ -92,9 +92,16 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
+          envs: |
+            REGISTRY: ${{ env.REGISTRY }}
+            IMAGE_NAME: ${{ env.IMAGE_NAME }}
+            TAG: $(echo $GITHUB_SHA | head -c7)
           script: |
             cd ${{ env.DEPLOY_DIR }}
-
-            docker compose stop app migrator || true
-            docker compose rm -f app migrator || true
-            docker compose up -d --no-deps app migrator
+            
+            # Удаляем устаревший атрибут version (однократно)
+            sed -i '/^version:/d' docker-compose.yml
+            
+            docker compose down || true
+            docker compose pull
+            docker compose up -d
