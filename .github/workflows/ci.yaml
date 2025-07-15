@@ -7,7 +7,7 @@ on:
 env:
   REGISTRY: "cr.selcloud.ru/ne4chelovek"
   IMAGE_NAME: "mikle"
-  COMPOSE_PROJECT_NAME: "mikle-app"
+  CONTAINER_NAME: "chat-server-container"
   DEPLOY_DIR: "/root"
 
 jobs:
