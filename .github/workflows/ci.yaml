@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [ main, master ]
 
 env:
   REGISTRY: "cr.selcloud.ru/ne4chelovek"
@@ -61,8 +61,6 @@ jobs:
           mkdir -p deploy
           cp docker-compose.yml deploy/
           cp -r migrations deploy/
-
-    # Create .env file
           cat <<EOF > deploy/.env
           TAG=$(echo $GITHUB_SHA | head -c7)
           REGISTRY=${{ env.REGISTRY }}
@@ -73,6 +71,7 @@ jobs:
           PG_PORT=5431
           MIGRATION_DIR=./migrations
           EOF
+
       - name: Upload files to server
         uses: appleboy/scp-action@v1.0.0
         with:
