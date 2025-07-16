@@ -77,8 +77,6 @@ jobs:
       - name: Upload files to server
         uses: appleboy/scp-action@v1.0.0
         with:
-          env:
-            TAG: $(echo $GITHUB_SHA | head -c7)
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
