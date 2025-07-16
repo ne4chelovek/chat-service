@@ -90,9 +90,12 @@ vendor-proto:
 	fi
 
 copy-to-server:
-	scp service_linux root@188.68.206.214:~
-	ssh root@188.68.206.214 "mkdir -p ~/certs"
-	scp -r certs/* root@188.68.206.214:~/certs/
+	scp -r migrations root@87.228.101.176:~
+	scp -r prod.docker-compose.yml root@87.228.101.176:~
+	scp -r migration.Dockerfile root@87.228.101.176:~
+	scp -r migration.sh root@87.228.101.176:~
+	scp -r prod.env root@87.228.101.176:~
+	scp -r certs root@87.228.101.176:~
 
 
 docker-build-and-push:
