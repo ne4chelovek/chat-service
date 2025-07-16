@@ -97,7 +97,7 @@ jobs:
             echo "=== Using TAG: $TAG ==="
             rm -f .env
             cat <<EOF > .env
-            TAG=$TAG
+            TAG=$(echo $GITHUB_SHA | head -c7)
             REGISTRY=${{ env.REGISTRY }}
             IMAGE_NAME=${{ env.IMAGE_NAME }}
             PG_DATABASE_NAME=${{ secrets.DB_NAME }}
