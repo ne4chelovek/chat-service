@@ -61,6 +61,8 @@ jobs:
           mkdir -p deploy
           cp docker-compose.yml deploy/
           cp -r migrations deploy/
+          cp migration.Dockerfile deploy/
+          cp migration.sh deploy/
           cat <<EOF > deploy/.env
           TAG=$(echo $GITHUB_SHA | head -c7)
           REGISTRY=${{ env.REGISTRY }}
