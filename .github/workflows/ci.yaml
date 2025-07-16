@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
 
 env:
   REGISTRY: "cr.selcloud.ru/ne4chelovek"
@@ -17,12 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Prepare certificates
-        run: |
-          mkdir -p certs
-          echo "${{ secrets.SERVICE_KEY }}" > certs/service.key
-          echo "${{ secrets.SERVICE_PEM }}" > certs/service.pem
-          chmod -R 700 certs
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -35,20 +29,22 @@ jobs:
 
       - name: Build and push main image
         run: |
-          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          TAG=$(echo $GITHUB_SHA | head -c7)
           docker buildx build \
             --platform linux/amd64 \
             --push \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG_NAME \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
             -f Dockerfile .
+
       - name: Build and push migrator image
         run: |
-          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          TAG=$(echo $GITHUB_SHA | head -c7)
           docker buildx build \
             --platform linux/amd64 \
             --push \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator:$TAG_NAME \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator:$TAG \
             -f migration.Dockerfile .
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
@@ -56,15 +52,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Prepare deployment files
+      - name: Generate deployment files
         run: |
           mkdir -p deploy
           cp docker-compose.yml deploy/
           cp -r migrations deploy/
-          cp migration.Dockerfile deploy/  # Добавьте эту строку
-          cp migration.sh deploy/
-          cat <<EOF > deploy/.env
+          
+          # Генерируем .env с корректными переменными
           TAG=$(echo $GITHUB_SHA | head -c7)
+          cat <<EOF > deploy/.env
+          TAG=$TAG
           REGISTRY=${{ env.REGISTRY }}
           IMAGE_NAME=${{ env.IMAGE_NAME }}
           PG_DATABASE_NAME=${{ secrets.DB_NAME }}
@@ -73,6 +70,8 @@ jobs:
           PG_PORT=5431
           MIGRATION_DIR=./migrations
           EOF
+          
+          echo "Generated TAG: $TAG"
 
       - name: Upload files to server
         uses: appleboy/scp-action@v1.0.0
@@ -82,6 +81,7 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           source: "deploy/*"
           target: ${{ env.DEPLOY_DIR }}
+          strip_components: 1
 
       - name: Deploy application
         uses: appleboy/ssh-action@v1.0.0
@@ -91,25 +91,15 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           script: |
             cd /root
-            echo "=== Debug: GITHUB_SHA ==="
-            echo "$GITHUB_SHA"
-            TAG=$(echo $GITHUB_SHA | head -c7)
-            echo "=== Using TAG: $TAG ==="
-            rm -f .env
-            cat <<EOF > .env
-            TAG=$(echo $GITHUB_SHA | head -c7)
-            REGISTRY=${{ env.REGISTRY }}
-            IMAGE_NAME=${{ env.IMAGE_NAME }}
-            PG_DATABASE_NAME=${{ secrets.DB_NAME }}
-            PG_USER=${{ secrets.DB_USER }}
-            PG_PASSWORD=${{ secrets.DB_PASSWORD }}
-            PG_PORT=5431
-            MIGRATION_DIR=./migrations
-            EOF
-            echo "=== .env content ==="
-            cat .env
+            echo "=== Current TAG ==="
+            grep TAG= .env
+            
+            echo "=== Pulling images ==="
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${{ env.REGISTRY }}
-            docker compose down || true
-            docker compose pull || true
-            docker compose up -d
-            echo "Deployment completed"
+            docker compose pull
+            
+            echo "=== Starting containers ==="
+            docker compose up -d --force-recreate
+            
+            echo "=== Deployment status ==="
+            docker compose ps
