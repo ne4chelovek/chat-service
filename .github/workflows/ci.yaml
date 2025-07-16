@@ -61,8 +61,6 @@ jobs:
           mkdir -p deploy
           cp docker-compose.yml deploy/
           cp -r migrations deploy/
-          [ -f migration.Dockerfile ] && cp migration.Dockerfile deploy/ || echo "migration.Dockerfile not found"
-          [ -f migration.sh ] && cp migration.sh deploy/ || echo "migration.sh not found"
 
     # Create .env file
           cat <<EOF > deploy/.env
