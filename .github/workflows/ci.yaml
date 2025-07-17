@@ -60,7 +60,7 @@ jobs:
             # Stop running container
             docker stop $CONTAINER_NAME
             
-            # Remove old container
+            # Remove old container...
             docker rm $CONTAINER_NAME
             
             # Run a new container from a new image...
