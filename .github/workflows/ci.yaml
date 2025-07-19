@@ -57,7 +57,7 @@ jobs:
             # Login into Selectel Registry
             docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
             
-            # Stop running container
+            # Stop running container...
             docker stop $CONTAINER_NAME
             
             # Remove old container...
