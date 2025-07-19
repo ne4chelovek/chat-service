@@ -90,12 +90,13 @@ vendor-proto:
 	fi
 
 copy-to-server:
-	scp -r migrations root@87.228.101.176:~
-	scp -r prod.docker-compose.yml root@87.228.101.176:~
-	scp -r migration.Dockerfile root@87.228.101.176:~
-	scp -r migration.sh root@87.228.101.176:~
-	scp -r prod.env root@87.228.101.176:~
-	scp -r certs root@87.228.101.176:~
+	scp -r migrations root@87.228.39.227:~
+	scp -r prod.docker-compose.yml root@87.228.39.227:~
+	scp -r prodMigration.Dockerfile root@87.228.39.227:~
+	scp -r prodMigration.sh root@87.228.39.227:~
+	scp prod.env root@87.228.39.227:~/
+	ssh root@87.228.39.227 "mv ~/prod.env ~/.env && chmod 600 ~/.env"
+	scp -r certs root@87.228.39.227:~
 
 
 docker-build-and-push:
