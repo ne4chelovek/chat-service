@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/ne4chelovek/auth-service/pkg/access_v1"
 	"github.com/ne4chelovek/chat_common/pkg/closer"
 	"github.com/ne4chelovek/chat_common/pkg/db"
@@ -81,7 +80,7 @@ func (s *serviceProvider) AuthClient() rpc.AuthClient {
 		//	if err != nil {
 		//		log.Fatalf("failed to get credentials of authentication service: %v", err)
 		//	}
-		authConn, err := grpc.NewClient(fmt.Sprintf(":%d", servicePort),
+		authConn, err := grpc.NewClient(servicePort,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
