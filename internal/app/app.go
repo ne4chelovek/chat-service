@@ -26,7 +26,7 @@ const (
 	httpAddress    = "localhost:8080"
 	swaggerAddress = "localhost:8090"
 	grpcAddress    = "localhost:9090"
-	servicePort    = 9000
+	servicePort    = "87.228.39.226:9000"
 )
 
 type App struct {
