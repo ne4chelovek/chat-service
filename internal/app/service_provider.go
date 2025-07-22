@@ -21,7 +21,7 @@ import (
 	"github.com/ne4chelovek/chat_service/internal/service"
 	chatService "github.com/ne4chelovek/chat_service/internal/service/chat"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
 	"time"
@@ -77,12 +77,12 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 
 func (s *serviceProvider) AuthClient() rpc.AuthClient {
 	if s.authClient == nil {
-		creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
-		if err != nil {
-			log.Fatalf("failed to get credentials of authentication service: %v", err)
-		}
+		//	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+		//	if err != nil {
+		//		log.Fatalf("failed to get credentials of authentication service: %v", err)
+		//	}
 		authConn, err := grpc.NewClient(fmt.Sprintf(":%d", servicePort),
-			grpc.WithTransportCredentials(creds),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
 			log.Fatalf("failed to connect to auth service: %v", err)

@@ -10,3 +10,5 @@
 /certs/
 /prod.env
 /prod.docker-compose.yml
+/prodMigration.sh
+/prodMigration.Dockerfile

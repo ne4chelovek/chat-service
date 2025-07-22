@@ -118,8 +118,8 @@ func init() {
 		log.Fatal("CERT_PATH not set in .env")
 	}
 
-	rootCmd.PersistentFlags().StringVar(&addressAuth, "auth-address", "localhost:9000", "Адрес сервера аутентификации")
-	rootCmd.PersistentFlags().StringVar(&addressChat, "chat-address", "localhost:9070", "Адрес чат-сервера")
+	rootCmd.PersistentFlags().StringVar(&addressAuth, "auth-address", "87.228.39.226:9000", "Адрес сервера аутентификации")
+	rootCmd.PersistentFlags().StringVar(&addressChat, "chat-address", "87.228.39.227:9070", "Адрес чат-сервера")
 	rootCmd.PersistentFlags().StringVar(&certPath, "cert", certPath, "Путь к TLS сертификату")
 
 	registerCmd.Flags().StringVarP(&username, "username", "u", "", "Имя пользователя")

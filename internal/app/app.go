@@ -9,7 +9,7 @@ import (
 	desc "github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
 	"net"
@@ -119,16 +119,16 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
-	if err != nil {
-		log.Fatalf("failed to create credentials: %v", err)
-		return err
-	}
+	//	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
+	//	if err != nil {
+	//		log.Fatalf("failed to create credentials: %v", err)
+	//		return err
+	//	}
 
 	authInterceptor := &interceptor.Client{Client: a.serviceProvider.AuthClient()}
 
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(creds),
+		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
 			interceptor.ValidateInterceptor,
 			authInterceptor.AuthInterceptor,
@@ -144,17 +144,17 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 func (a *App) initHTTPServer(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 
-	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
-	if err != nil {
-		fmt.Printf("failed to load TLS keys: %v", err)
-		return err
-	}
+	//	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+	//	if err != nil {
+	//		fmt.Printf("failed to load TLS keys: %v", err)
+	//		return err
+	//	}
 
 	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(creds),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	err = desc.RegisterChatHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
+	err := desc.RegisterChatHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
 	if err != nil {
 		return err
 	}
