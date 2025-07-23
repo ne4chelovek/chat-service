@@ -23,9 +23,9 @@ import (
 
 const (
 	grpcPort       = 9070
-	httpAddress    = "localhost:8080"
-	swaggerAddress = "localhost:8090"
-	grpcAddress    = "localhost:9090"
+	httpAddress    = "87.228.39.227:8080"
+	swaggerAddress = "87.228.39.227:8090"
+	grpcAddress    = "87.228.39.227:9090"
 	servicePort    = "87.228.39.226:9000"
 )
 
