@@ -23,10 +23,10 @@ import (
 
 const (
 	grpcPort       = 9070
-	httpAddress    = "87.228.39.227:8080"
-	swaggerAddress = "87.228.39.227:8090"
-	grpcAddress    = "87.228.39.227:9090"
-	servicePort    = "87.228.39.226:9000"
+	httpAddress    = ":8080"
+	swaggerAddress = ":8090"
+	grpcAddress    = ":9090"
+	servicePort    = ":9000"
 )
 
 type App struct {
