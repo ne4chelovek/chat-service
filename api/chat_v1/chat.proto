@@ -51,7 +51,15 @@ service Chat {
             body: "*"
         };
     }
-    rpc ConnectChat(ConnectChatRequest) returns(stream Message);
+    rpc ConnectChat(ConnectChatRequest) returns(stream Message) {
+        option (google.api.http) = {
+            get: "/chat/v1/connect"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            tags: "streaming"
+            description: "Stream messages via WebSocket"
+        };
+    }
 }
 message ConnectChatRequest {
     string chat_id = 1;
