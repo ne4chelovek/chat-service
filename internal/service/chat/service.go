@@ -3,6 +3,7 @@ package chat
 import (
 	"github.com/ne4chelovek/chat_common/pkg/db"
 	"github.com/ne4chelovek/chat_service/internal/model"
+	catApi "github.com/ne4chelovek/chat_service/internal/openApi"
 	"github.com/ne4chelovek/chat_service/internal/repository"
 	"github.com/ne4chelovek/chat_service/internal/service"
 	"sync"
@@ -16,6 +17,7 @@ type serv struct {
 	chatRepository repository.ChatRepository
 	logRepository  repository.LogRepository
 	txManager      db.TxManager
+	api            catApi.ApiCat
 
 	channels   map[string]chan *model.Message
 	mxChannels sync.RWMutex
@@ -29,11 +31,12 @@ type chat struct {
 	m       sync.RWMutex
 }
 
-func NewService(chatRepository repository.ChatRepository, logRepository repository.LogRepository, txManager db.TxManager) service.ChatService {
+func NewService(chatRepository repository.ChatRepository, logRepository repository.LogRepository, api catApi.ApiCat, txManager db.TxManager) service.ChatService {
 	return &serv{
 		chatRepository: chatRepository,
 		logRepository:  logRepository,
 		txManager:      txManager,
+		api:            api,
 		channels:       make(map[string]chan *model.Message),
 		chats:          make(map[string]*chat),
 	}
