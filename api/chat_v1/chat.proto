@@ -79,11 +79,11 @@ message CreateResponse {
 //Удаление чата из системы по его индефикатору
 message DeleteRequest {
     int64 id = 1;
-}   
+}
 
 message Message {
     string from = 1;
-    string text = 2 [(validate.rules).string = {min_len: 1, max_len: 100}]; 
+    string text = 2 [(validate.rules).string = {min_len: 1, max_len: 100}];
     google.protobuf.Timestamp crated_at = 4;
 }
 

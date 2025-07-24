@@ -6,7 +6,6 @@ import (
 	"github.com/ne4chelovek/chat_common/pkg/db"
 	dbMocks "github.com/ne4chelovek/chat_common/pkg/db/mocks"
 	"github.com/ne4chelovek/chat_common/pkg/db/transaction"
-	clientApi "github.com/ne4chelovek/chat_service/internal/clientApi"
 	"github.com/ne4chelovek/chat_service/internal/repository"
 	repoMocks "github.com/ne4chelovek/chat_service/internal/repository/mocks"
 	"github.com/ne4chelovek/chat_service/internal/service/chat"
@@ -24,7 +23,6 @@ func TestDelete(t *testing.T) {
 	t.Parallel()
 	type chatRepositoryMockFunc func(mc *minimock.Controller) repository.ChatRepository
 	type logRepositoryMockFunc func(mc *minimock.Controller) repository.LogRepository
-	type apiInternalMock func(mc *minimock.Controller) clientApi.ApiCat
 	type transactorMockFunc func(mc *minimock.Controller) db.Transactor
 
 	type args struct {
@@ -55,7 +53,6 @@ func TestDelete(t *testing.T) {
 
 		chatServiceMock   chatRepositoryMockFunc
 		logRepositoryMock logRepositoryMockFunc
-		apiInternalMock   apiInternalMock
 		transactorMock    transactorMockFunc
 	}{
 		{
@@ -143,9 +140,8 @@ func TestDelete(t *testing.T) {
 			t.Parallel()
 			chatServiceMock := tt.chatServiceMock(mc)
 			logRepositoryMock := tt.logRepositoryMock(mc)
-			clientApiMock := tt.apiInternalMock(mc)
 			transactorMock := transaction.NewTransactionManager(tt.transactorMock(mc))
-			service := chat.NewService(chatServiceMock, logRepositoryMock, clientApiMock, transactorMock)
+			service := chat.NewService(chatServiceMock, logRepositoryMock, transactorMock)
 
 			res, err := service.DeleteChat(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.want, res)

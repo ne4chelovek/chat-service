@@ -8,9 +8,9 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/gojuno/minimock/v3 v3.4.5
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/jackc/pgx/v5 v5.7.2
-	github.com/joho/godotenv v1.5.1
 	github.com/ne4chelovek/auth-service v0.0.0-20250707130444-4e37e3dccb90
 	github.com/ne4chelovek/chat_common v0.1.2
 	github.com/rakyll/statik v0.1.7

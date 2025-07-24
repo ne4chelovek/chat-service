@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/ne4chelovek/chat_service/internal/model"
+	"net/http"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -13,4 +14,8 @@ type ChatService interface {
 	GetChatInfo(ctx context.Context, chatID int64) ([]string, error)
 	SendMessage(ctx context.Context, chatID int64, mes *model.Message) (string, error)
 	Connect(chatID int64, username string, stream model.Stream) error
+}
+
+type HandlerService interface {
+	HandleChatWebSocket(w http.ResponseWriter, r *http.Request)
 }

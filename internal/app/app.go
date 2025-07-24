@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/ne4chelovek/chat_common/pkg/closer"
+	"github.com/ne4chelovek/chat_service/internal/chatHandler"
 	"github.com/ne4chelovek/chat_service/internal/interceptor"
 	desc "github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 	"io"
 	"log"
 	"net"
@@ -23,10 +24,10 @@ import (
 
 const (
 	grpcPort       = 9070
-	httpAddress    = ":8080"
-	swaggerAddress = ":8090"
-	grpcAddress    = ":9090"
-	servicePort    = ":9000"
+	httpAddress    = "localhost:8080"
+	swaggerAddress = "localhost:8090"
+	grpcAddress    = "localhost:9070"
+	authPort       = "localhost:9000"
 )
 
 type App struct {
@@ -119,16 +120,16 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	//	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
-	//	if err != nil {
-	//		log.Fatalf("failed to create credentials: %v", err)
-	//		return err
-	//	}
+	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
+	if err != nil {
+		log.Fatalf("failed to create credentials: %v", err)
+		return err
+	}
 
 	authInterceptor := &interceptor.Client{Client: a.serviceProvider.AuthClient()}
 
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
+		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(
 			interceptor.ValidateInterceptor,
 			authInterceptor.AuthInterceptor,
@@ -142,22 +143,27 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) initHTTPServer(ctx context.Context) error {
-	mux := runtime.NewServeMux()
+	gwMux := runtime.NewServeMux()
 
-	//	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
-	//	if err != nil {
-	//		fmt.Printf("failed to load TLS keys: %v", err)
-	//		return err
-	//	}
-
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+	if err != nil {
+		fmt.Printf("failed to load TLS keys: %v", err)
+		return err
 	}
 
-	err := desc.RegisterChatHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
+	err = desc.RegisterChatHandlerFromEndpoint(ctx, gwMux, grpcAddress, []grpc.DialOption{
+		grpc.WithTransportCredentials(creds),
+	})
 	if err != nil {
 		return err
 	}
+
+	handle := chatHandler.NewChatClient(a.serviceProvider.chatClient)
+
+	mainMux := http.NewServeMux()
+
+	mainMux.Handle("/api/", gwMux)
+	mainMux.HandleFunc("/ws/chat", handle.HandleChatWebSocket)
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -168,7 +174,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 
 	a.httpServer = &http.Server{
 		Addr:    httpAddress,
-		Handler: corsMiddleware.Handler(mux),
+		Handler: corsMiddleware.Handler(mainMux),
 	}
 
 	return nil
