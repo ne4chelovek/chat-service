@@ -143,13 +143,13 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) initHTTPServer(ctx context.Context) error {
-	gwMux := runtime.NewServeMux()
-
 	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
 	if err != nil {
 		fmt.Printf("failed to load TLS keys: %v", err)
 		return err
 	}
+
+	gwMux := runtime.NewServeMux()
 
 	err = desc.RegisterChatHandlerFromEndpoint(ctx, gwMux, grpcAddress, []grpc.DialOption{
 		grpc.WithTransportCredentials(creds),
@@ -158,11 +158,11 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		return err
 	}
 
-	handle := chatHandler.NewChatClient(a.serviceProvider.chatClient)
+	handle := chatHandler.NewChatClient(a.serviceProvider.ChatClient())
 
 	mainMux := http.NewServeMux()
 
-	mainMux.Handle("/api/", gwMux)
+	mainMux.Handle("/chat/v1/", gwMux)
 	mainMux.HandleFunc("/ws/chat", handle.HandleChatWebSocket)
 
 	corsMiddleware := cors.New(cors.Options{

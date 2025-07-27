@@ -39,7 +39,7 @@ func NewConsumer(handler Handler, address []string, topic, consumerGroup string)
 }
 
 func (c *Consumer) Start() {
-	for range 1 {
+	for {
 		if c.stop {
 			break
 		}

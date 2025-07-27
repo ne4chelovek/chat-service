@@ -4,6 +4,8 @@ import (
 	"github.com/ne4chelovek/chat_common/pkg/db"
 	"github.com/ne4chelovek/chat_service/internal/model"
 	"github.com/ne4chelovek/chat_service/internal/repository"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 
 	"context"
 	"fmt"
@@ -110,8 +112,8 @@ func (r *repo) DeleteChat(ctx context.Context, chatID int64) (*emptypb.Empty, er
 func (r *repo) SendMessage(ctx context.Context, chatID int64, mes *model.Message) (string, error) {
 	builderInsert := sq.Insert(tableMessages).
 		PlaceholderFormat(sq.Dollar).
-		Columns(idColumn, from_userColumn, textColumn).
-		Values(chatID, mes.From, mes.Text).
+		Columns(idColumn, from_userColumn, textColumn, timestampColumn).
+		Values(chatID, mes.From, mes.Text, timestamppb.Now().AsTime()).
 		Suffix("RETURNING status")
 
 	query, args, err := builderInsert.ToSql()
@@ -161,9 +163,11 @@ func (r *repo) GetMessage(ctx context.Context, chatID int64, page uint64) ([]*mo
 	var listMessage []*model.Message
 	for rows.Next() {
 		message := &model.Message{}
-		if err := rows.Scan(&message.From, &message.Text, &message.Timestamppb); err != nil {
+		var dbTime time.Time
+		if err := rows.Scan(&message.From, &message.Text, &dbTime); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %v", err)
 		}
+		message.Timestamppb = timestamppb.New(dbTime)
 		listMessage = append(listMessage, message)
 	}
 	return listMessage, nil

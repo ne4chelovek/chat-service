@@ -11,6 +11,12 @@ type Message struct {
 	Timestamppb *timestamppb.Timestamp
 }
 
+type WsMessage struct {
+	ChatID int64  `json:"chat_id"`
+	From   string `json:"from"`
+	Text   string `json:"text"`
+}
+
 type Stream interface {
 	desc.Chat_ConnectChatServer
 }

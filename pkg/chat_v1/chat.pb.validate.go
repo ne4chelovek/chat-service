@@ -479,35 +479,6 @@ func (m *Message) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetCratedAt()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MessageValidationError{
-					field:  "CratedAt",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MessageValidationError{
-					field:  "CratedAt",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCratedAt()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MessageValidationError{
-				field:  "CratedAt",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if len(errors) > 0 {
 		return MessageMultiError(errors)
 	}
@@ -584,6 +555,139 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MessageValidationError{}
+
+// Validate checks the field values on StreamMessage with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *StreamMessage) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StreamMessage with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in StreamMessageMultiError, or
+// nil if none found.
+func (m *StreamMessage) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StreamMessage) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for From
+
+	// no validation rules for Text
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StreamMessageValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StreamMessageValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StreamMessageValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return StreamMessageMultiError(errors)
+	}
+
+	return nil
+}
+
+// StreamMessageMultiError is an error wrapping multiple validation errors
+// returned by StreamMessage.ValidateAll() if the designated constraints
+// aren't met.
+type StreamMessageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StreamMessageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StreamMessageMultiError) AllErrors() []error { return m }
+
+// StreamMessageValidationError is the validation error returned by
+// StreamMessage.Validate if the designated constraints aren't met.
+type StreamMessageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StreamMessageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StreamMessageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StreamMessageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StreamMessageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StreamMessageValidationError) ErrorName() string { return "StreamMessageValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StreamMessageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStreamMessage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StreamMessageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StreamMessageValidationError{}
 
 // Validate checks the field values on SendMessageRequest with the rules
 // defined in the proto definition for this message. If any rules are

@@ -7,12 +7,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 func connect(ctx context.Context, address string, chatId int64) error {
@@ -59,7 +57,7 @@ func connect(ctx context.Context, address string, chatId int64) error {
 				return
 			}
 			fmt.Printf("%v - from: %s: %s",
-				message.GetCratedAt().AsTime().Format(time.RFC3339),
+				message.CreatedAt,
 				color.GreenString(message.GetFrom()),
 				message.Text,
 			)
@@ -73,7 +71,7 @@ func connect(ctx context.Context, address string, chatId int64) error {
 			return err
 		}
 		fmt.Println("\033[1A")
-		_, err = client.SendMessage(ctx, &chat_v1.SendMessageRequest{ChatId: chatId, Message: &chat_v1.Message{Text: text, From: claims.Username, CratedAt: timestamppb.Now()}})
+		_, err = client.SendMessage(ctx, &chat_v1.SendMessageRequest{ChatId: chatId, Message: &chat_v1.Message{Text: text, From: claims.Username}})
 		if err != nil {
 			log.Printf("failed to send message: %v", err)
 		}

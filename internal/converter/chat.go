@@ -7,16 +7,15 @@ import (
 
 func ToChatFromDesc(chat *desc.Message) *model.Message {
 	return &model.Message{
-		From:        chat.From,
-		Text:        chat.Text,
-		Timestamppb: chat.CratedAt,
+		From: chat.From,
+		Text: chat.Text,
 	}
 }
 
-func ToMessageFromService(message *model.Message) *desc.Message {
-	return &desc.Message{
-		From:     message.From,
-		Text:     message.Text,
-		CratedAt: message.Timestamppb,
+func ToMessageFromService(message *model.Message) *desc.StreamMessage {
+	return &desc.StreamMessage{
+		From:      message.From,
+		Text:      message.Text,
+		CreatedAt: message.Timestamppb,
 	}
 }

@@ -26,35 +26,6 @@
   ],
   "paths": {
     "/chat/v1": {
-      "get": {
-        "operationId": "Chat_Get",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/chat_v1GetResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "Chat"
-        ]
-      },
       "delete": {
         "operationId": "Chat_Delete",
         "responses": {
@@ -97,13 +68,13 @@
               "type": "object",
               "properties": {
                 "result": {
-                  "$ref": "#/definitions/chat_v1Message"
+                  "$ref": "#/definitions/chat_v1StreamMessage"
                 },
                 "error": {
                   "$ref": "#/definitions/rpcStatus"
                 }
               },
-              "title": "Stream result of chat_v1Message"
+              "title": "Stream result of chat_v1StreamMessage"
             }
           },
           "default": {
@@ -195,6 +166,37 @@
           "Chat"
         ]
       }
+    },
+    "/chat/v1/{id}": {
+      "get": {
+        "operationId": "Chat_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chat_v1GetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Chat"
+        ]
+      }
     }
   },
   "definitions": {
@@ -239,10 +241,6 @@
         },
         "text": {
           "type": "string"
-        },
-        "cratedAt": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     },
@@ -267,6 +265,21 @@
         }
       },
       "title": "Ручка оповещения отправки"
+    },
+    "chat_v1StreamMessage": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
