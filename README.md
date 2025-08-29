@@ -54,6 +54,7 @@
 ### Запустите `chat-service` (инфраструктура)
 
 ```bash
+git clone https://github.com/ne4chelovek/chat-service
 cd ../chat-service
 docker-compose up --build -d
 ```
