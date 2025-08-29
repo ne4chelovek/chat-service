@@ -21,7 +21,6 @@ import (
 	chatService "github.com/ne4chelovek/chat_service/internal/service/chat"
 	"github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
@@ -29,17 +28,12 @@ import (
 	"time"
 )
 
-var kafkaAddresses = []string{
-	//"kafka1:29091",
-	"localhost:9091", // Для доступа с хоста
-	"localhost:9092",
-	"localhost:9093",
-}
+var kafkaAddresses = []string{"kafka1:29091"}
 
 const (
 	topic         = "user_session_events"
 	consumerGroup = "chat-consumer-group"
-	dbDSN         = "host=localhost port=5432 dbname=chat user=chat-user password=chat-password sslmode=disable"
+	dbDSN         = "host=pg-chat port=5432 dbname=chat user=chat-user password=chat-password sslmode=disable"
 )
 
 type serviceProvider struct {
@@ -101,12 +95,12 @@ func (s *serviceProvider) AuthClient() rpc.AuthClient {
 
 func (s *serviceProvider) ChatClient() chat_v1.ChatClient {
 	s.chatClientOnce.Do(func() {
-		creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
-		if err != nil {
-			log.Fatalf("failed to get credentials of authentication service: %v", err)
-		}
+		//	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+		//	if err != nil {
+		//		log.Fatalf("failed to get credentials of authentication service: %v", err)
+		//	}
 		chatConn, err := grpc.NewClient(grpcAddress,
-			grpc.WithTransportCredentials(creds),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
 			log.Fatalf("failed to connect to chat: %v", err)

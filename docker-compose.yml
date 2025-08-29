@@ -1,31 +1,67 @@
 volumes:
   postgres_volume:
 
+networks:
+  chat-net:
+    driver: bridge
+  auth_kafka-net:
+    external: true
+
 services:
   pg-chat:
-    image: postgres:14-alpine3.19
+    image: postgres:14-alpine
     environment:
-      - "POSTGRES_DB=${PG_DATABASE_NAME}"
-      - "POSTGRES_USER=${PG_USER}"
-      - "POSTGRES_PASSWORD=${PG_PASSWORD}"
+      POSTGRES_DB: ${PG_DATABASE_NAME}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
     ports:
       - "${PG_PORT}:5432"
     volumes:
       - postgres_volume:/var/lib/postgresql/data
-
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${PG_USER:-chat_user} -d ${PG_DATABASE_NAME:-chat}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DATABASE_NAME}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - chat-net
     restart: unless-stopped
 
   migrator:
     build:
       context: .
       dockerfile: migration.Dockerfile
-    restart: on-failure
     environment:
-      DB_HOST: pg-chat
+      PG_HOST: pg-chat
+      PG_DATABASE_NAME: ${PG_DATABASE_NAME}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+    depends_on:
+      pg-chat:
+        condition: service_healthy
+    networks:
+      - chat-net
+    restart: on-failure
 
-  
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "9070:9070"
+      - "8090:8090"
+    environment:
+      PG_HOST: pg-chat
+      PG_PORT: ${PG_PORT}
+      PG_DATABASE_NAME: ${PG_DATABASE_NAME}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      KAFKA_BROKERS: kafka1:29091
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    networks:
+      - chat-net
+      - auth_kafka-net
+    restart: unless-stopped

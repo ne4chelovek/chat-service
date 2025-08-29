@@ -7,6 +7,7 @@ import (
 	dbMocks "github.com/ne4chelovek/chat_common/pkg/db/mocks"
 	"github.com/ne4chelovek/chat_common/pkg/db/transaction"
 	clientApi "github.com/ne4chelovek/chat_service/internal/openApi"
+	apiMocks "github.com/ne4chelovek/chat_service/internal/openApi/mocks"
 	"github.com/ne4chelovek/chat_service/internal/repository"
 	repoMocks "github.com/ne4chelovek/chat_service/internal/repository/mocks"
 	"github.com/ne4chelovek/chat_service/internal/service/chat"
@@ -76,6 +77,10 @@ func TestGet(t *testing.T) {
 				mock.LogMock.Expect(minimock.AnyContext, log).Return(nil)
 				return mock
 			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
+				return mock
+			},
 			transactorMock: func(mc *minimock.Controller) db.Transactor {
 				mock := dbMocks.NewTransactorMock(mc)
 				txMock := dbMocks.NewTxMock(mc)
@@ -101,6 +106,11 @@ func TestGet(t *testing.T) {
 				mock := repoMocks.NewLogRepositoryMock(mc)
 				return mock
 			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
+				return mock
+			},
+
 			transactorMock: func(mc *minimock.Controller) db.Transactor {
 				mock := dbMocks.NewTransactorMock(mc)
 				txMock := dbMocks.NewTxMock(mc)
@@ -125,6 +135,10 @@ func TestGet(t *testing.T) {
 			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
 				mock := repoMocks.NewLogRepositoryMock(mc)
 				mock.LogMock.Expect(minimock.AnyContext, log).Return(repositoryErr)
+				return mock
+			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
 				return mock
 			},
 			transactorMock: func(mc *minimock.Controller) db.Transactor {

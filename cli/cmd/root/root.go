@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"log"
-	"os"
 )
 
 const filename = ".access_token"
@@ -110,17 +108,17 @@ func Execute() {
 }
 
 func init() {
-	if err := godotenv.Load("../.env"); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	certPath = os.Getenv("CERT_PATH_CLI")
-	if certPath == "" {
-		log.Fatal("CERT_PATH not set in .env")
-	}
+	//if err := godotenv.Load("../.env"); err != nil {
+	//	log.Fatal("Error loading .env file")
+	//}
+	//certPath = os.Getenv("CERT_PATH_CLI")
+	//if certPath == "" {
+	//	log.Fatal("CERT_PATH not set in .env")
+	//}
 
-	rootCmd.PersistentFlags().StringVar(&addressAuth, "auth-address", "localhost:9000", "Адрес сервера аутентификации")
+	rootCmd.PersistentFlags().StringVar(&addressAuth, "auth-address", "auth-service:9000", "Адрес сервера аутентификации")
 	rootCmd.PersistentFlags().StringVar(&addressChat, "chat-address", "localhost:9070", "Адрес чат-сервера")
-	rootCmd.PersistentFlags().StringVar(&certPath, "cert", certPath, "Путь к TLS сертификату")
+	//	rootCmd.PersistentFlags().StringVar(&certPath, "cert", certPath, "Путь к TLS сертификату")
 
 	registerCmd.Flags().StringVarP(&username, "username", "u", "", "Имя пользователя")
 	registerCmd.Flags().StringVarP(&email, "email", "e", "", "Email пользователя")

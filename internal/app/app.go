@@ -10,7 +10,7 @@ import (
 	desc "github.com/ne4chelovek/chat_service/pkg/chat_v1"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
 	"net"
@@ -24,10 +24,10 @@ import (
 
 const (
 	grpcPort       = 9070
-	httpAddress    = "localhost:8080"
-	swaggerAddress = "localhost:8090"
+	httpAddress    = ":8080"
+	swaggerAddress = ":8090"
 	grpcAddress    = "localhost:9070"
-	authPort       = "localhost:9000"
+	authPort       = "auth-service:9000"
 )
 
 type App struct {
@@ -120,16 +120,16 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
-	if err != nil {
-		log.Fatalf("failed to create credentials: %v", err)
-		return err
-	}
+	//creds, err := credentials.NewServerTLSFromFile("certs/service.pem", "certs/service.key")
+	//if err != nil {
+	//	log.Fatalf("failed to create credentials: %v", err)
+	//	return err
+	//}
 
 	authInterceptor := &interceptor.Client{Client: a.serviceProvider.AuthClient()}
 
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(creds),
+		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
 			interceptor.ValidateInterceptor,
 			authInterceptor.AuthInterceptor,
@@ -143,16 +143,16 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) initHTTPServer(ctx context.Context) error {
-	creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
-	if err != nil {
-		fmt.Printf("failed to load TLS keys: %v", err)
-		return err
-	}
+	//creds, err := credentials.NewClientTLSFromFile("certs/service.pem", "")
+	//if err != nil {
+	//	fmt.Printf("failed to load TLS keys: %v", err)
+	//	return err
+	//}
 
 	gwMux := runtime.NewServeMux()
 
-	err = desc.RegisterChatHandlerFromEndpoint(ctx, gwMux, grpcAddress, []grpc.DialOption{
-		grpc.WithTransportCredentials(creds),
+	err := desc.RegisterChatHandlerFromEndpoint(ctx, gwMux, grpcAddress, []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	})
 	if err != nil {
 		return err

@@ -8,6 +8,7 @@ import (
 	"github.com/ne4chelovek/chat_common/pkg/db/transaction"
 	"github.com/ne4chelovek/chat_service/internal/model"
 	clientApi "github.com/ne4chelovek/chat_service/internal/openApi"
+	apiMocks "github.com/ne4chelovek/chat_service/internal/openApi/mocks"
 	"github.com/ne4chelovek/chat_service/internal/repository"
 	repoMocks "github.com/ne4chelovek/chat_service/internal/repository/mocks"
 	"github.com/ne4chelovek/chat_service/internal/service/chat"
@@ -20,7 +21,7 @@ import (
 	"github.com/brianvoe/gofakeit"
 )
 
-func TestSendMessage(t *testing.T) {
+func TestCreate(t *testing.T) {
 	t.Parallel()
 	type chatRepositoryMockFunc func(mc *minimock.Controller) repository.ChatRepository
 	type logRepositoryMockFunc func(mc *minimock.Controller) repository.LogRepository
@@ -36,26 +37,30 @@ func TestSendMessage(t *testing.T) {
 		ctx = context.Background()
 		mc  = minimock.NewController(t)
 
-		id    = gofakeit.Int64()
-		users = gofakeit.Username()
-		text  = "someone text"
+		id   = gofakeit.Int64()
+		user = gofakeit.Username()
+
+		users = []string{gofakeit.Username(), gofakeit.Username()}
+
+		text = "someone text"
 
 		opts = pgx.TxOptions{IsoLevel: pgx.ReadCommitted}
 
-		repositoryErr = fmt.Errorf("failed to send message")
+		repositoryErr = fmt.Errorf("failed to create chat")
 
 		req = &model.Message{
-			From: users,
+			From: user,
 			Text: text,
 		}
-		log    = fmt.Sprintf("SendMessage in chat with id: %d, message: %v", id, req)
-		status = "SENT"
+		log   = fmt.Sprintf("SendMessage in chat with id: %d, message: %v", id, req)
+		expid = id
 	)
 
 	test := []struct {
 		name              string
 		args              args
-		want              string
+		want              int64
+		wantLog           string
 		err               error
 		chatSeviceMock    chatRepositoryMockFunc
 		logRepositoryMock logRepositoryMockFunc
@@ -68,11 +73,11 @@ func TestSendMessage(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: status,
+			want: expid,
 			err:  nil,
 			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
-				mock.SendMessageMock.Expect(minimock.AnyContext, id, req).Return(status, nil)
+				mock.CreateMock.Expect(minimock.AnyContext, users).Return(expid, nil)
 				return mock
 			},
 			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
@@ -80,11 +85,15 @@ func TestSendMessage(t *testing.T) {
 				mock.LogMock.Expect(minimock.AnyContext, log).Return(nil)
 				return mock
 			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
+				return mock
+			},
 			transactorMock: func(mc *minimock.Controller) db.Transactor {
 				mock := dbMocks.NewTransactorMock(mc)
 				txMock := dbMocks.NewTxMock(mc)
 				mock.BeginTxMock.Expect(minimock.AnyContext, opts).Return(txMock, nil)
-				txMock.CommitMock.Expect(minimock.AnyContext).Return(nil)
+				txMock.CommitMock.Return(nil)
 				return mock
 			},
 		},
@@ -94,7 +103,7 @@ func TestSendMessage(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: "",
+			want: 0,
 			err:  repositoryErr,
 			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
@@ -105,11 +114,15 @@ func TestSendMessage(t *testing.T) {
 				mock := repoMocks.NewLogRepositoryMock(mc)
 				return mock
 			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
+				return mock
+			},
 			transactorMock: func(mc *minimock.Controller) db.Transactor {
 				mock := dbMocks.NewTransactorMock(mc)
 				txMock := dbMocks.NewTxMock(mc)
 				mock.BeginTxMock.Expect(minimock.AnyContext, opts).Return(txMock, nil)
-				txMock.RollbackMock.Expect(minimock.AnyContext).Return(nil)
+				txMock.CommitMock.Return(nil)
 				return mock
 			},
 		},
@@ -119,11 +132,11 @@ func TestSendMessage(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: "",
-			err:  repositoryErr,
+			wantLog: "",
+			err:     repositoryErr,
 			chatSeviceMock: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := repoMocks.NewChatRepositoryMock(mc)
-				mock.SendMessageMock.Expect(minimock.AnyContext, id, req).Return(status, nil)
+				mock.CreateMock.Expect(minimock.AnyContext, users).Return(0, repositoryErr)
 				return mock
 			},
 			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
@@ -131,11 +144,15 @@ func TestSendMessage(t *testing.T) {
 				mock.LogMock.Expect(minimock.AnyContext, log).Return(repositoryErr)
 				return mock
 			},
+			apiInternalMock: func(mc *minimock.Controller) clientApi.ApiCat {
+				mock := apiMocks.NewApiCatMock(mc)
+				return mock
+			},
 			transactorMock: func(mc *minimock.Controller) db.Transactor {
 				mock := dbMocks.NewTransactorMock(mc)
 				txMock := dbMocks.NewTxMock(mc)
 				mock.BeginTxMock.Expect(minimock.AnyContext, opts).Return(txMock, nil)
-				txMock.RollbackMock.Expect(minimock.AnyContext).Return(nil)
+				txMock.CommitMock.Return(nil)
 				return mock
 			},
 		},
@@ -151,10 +168,10 @@ func TestSendMessage(t *testing.T) {
 			transactorMock := transaction.NewTransactionManager(tt.transactorMock(mc))
 			service := chat.NewService(chatServiceMock, logRepositoryMock, clientApiMock, transactorMock)
 
-			res, err := service.SendMessage(tt.args.ctx, id, tt.args.req)
+			res, err := service.Create(tt.args.ctx, users)
 			require.Equal(t, tt.want, res)
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorContains(t, err, tt.err.Error())
 			} else {
 				require.NoError(t, err)
 			}
