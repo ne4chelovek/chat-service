@@ -64,56 +64,56 @@ docker-compose up --build -d
 - REST API: http://localhost:8080
 - Swagger UI: http://localhost:8090
 - WebSocket: ws://localhost:8080/ws/chat?chat_id=1
+
 ---
+
 ## 💻 CLI (Консольный интерфейс)
 
 Расположение: chat-service/cli.
 
 Сборка: `go build -o bin/mikle main.go`
 
-## Доступные команды
+### Доступные команды
 
-- ### Помощь по CLI
+- Помощь по CLI:
 
-`bin/mikle --help`
+````
+  bin/mikle --help
+````
 
-- ### Регистрация нового пользователя
+- Регистрация нового пользователя:
 
-`bin/mikle register --username <имя> --email <email> --password <пароль>`
+````
+  bin/mikle register --username <имя> --email <email> --password <пароль>
+````
 
-- ### Пример:
+- Вход (аутентификация):
 
-`bin/mikle register --username Denis --email denis@example.com --password secret123`
+````
+  bin/mikle login
+````
 
-- ### Вход (аутентификация)
+- Выход (удаление токена):
 
-`bin/mikle login`
+````
+  bin/mikle logout
+````
 
-- ### Выход (удаление токена)
+- Создание чата:
 
-`bin/mikle logout`
+````
+  bin/mikle create --users user1,user2,user3
+````
 
-- ### Создание чата
+- Удаление чата:
 
-`bin/mikle create --users user1,user2,user3`
+````
+  bin/mikle delete --chat-id 5
+````
 
-- ### Пример:
+- Подключение к чату (просмотр сообщений):
 
-`bin/mikle create --users Denis,Anna,Ivan`
-
-- ### `Удаление чата
-
-`bin/mikle delete --chat-id 5`
-
-- ### Пример:
-
-`bin/mikle delete --chat-id 5`
-
-- ### Подключение к чату (просмотр сообщений)
-
-`bin/mikle connect --chat-id 5`
-
-- ### Пример:
-
-`bin/mikle connect --chat-id 5`
+````
+  bin/mikle connect --chat-id 5
+````
  
