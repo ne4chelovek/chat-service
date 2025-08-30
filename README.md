@@ -68,7 +68,7 @@ docker-compose up --build -d
 
 ---
 
-## 💻 CLI (Консольный интерфейс)
+## 💻 CLI 
 
 Расположение: chat-service/cli.
 
