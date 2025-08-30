@@ -26,8 +26,7 @@
 ## 📦 Технологии
 
 - Go 1.23+
-- gRPC + gRPC-Gateway
-- gRPC-Streaming (односторонний)
+- gRPC, gRPC-Streaming (односторонний)
 - WebSocket
 - PostgreSQL (своя БД — `pg-chat`)
 - Kafka (consumer топика `user_session_events`)
